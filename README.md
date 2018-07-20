@@ -8,6 +8,8 @@ Only Mirai botnet scans are supported by now, [inspired by](https://mirai.badpac
 Install
 -------
 
+The app is built on top of `gopacket` package which provides C bindings for the `libpcap`, so you should have `libpcap-dev` package installed first.
+
 ```
 go get github.com/ilyaglow/badcapt/cmd/badcapt
 ```
