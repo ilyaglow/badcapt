@@ -24,4 +24,4 @@ Usage of badcapt:
     	Interface name to listen
 ```
 
-You can also [take a look at](https://github.com/ilyaglow/badcapt/cmd/badsearch) `badsearch` - a simple daily records dumper script
+You can also [take a look at](https://github.com/ilyaglow/badcapt/tree/master/cmd/badsearch) `badsearch` - a simple daily records dumper script
