@@ -1,9 +1,8 @@
 About
 -----
 
-Badcapt will try to detect *bad* packets and export them to the Elastic storage.
-
-Only Mirai botnet scans are supported by now, [inspired by](https://mirai.badpackets.net/about/) `@Bad_Packets`.
+Badcapt is a project inspired by `@Bad_Packets` work. It will try to detect
+*bad* packets and export them to the Elastic storage or output to the screen.
 
 Install
 -------
@@ -24,6 +23,8 @@ Usage of badcapt:
     	Elastic URL (default "http://localhost:9200")
   -i string
     	Interface name to listen
+  -d bool
+    	Turn on debug mode
 ```
 
 You can also [take a look at](https://github.com/ilyaglow/badcapt/tree/master/cmd/badsearch) `badsearch` - a simple daily records dumper script

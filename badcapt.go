@@ -20,7 +20,9 @@ const (
 )
 
 var defaultChecks = []func(gopacket.Packet) []string{
-	MiraiCheck,
+	MiraiIdentifier,
+	ZmapIdentifier,
+	MasscanIdentifier,
 }
 
 // Config defines badcapt configuration
@@ -149,6 +151,25 @@ func (c *Config) exportScreen(record *Record) error {
 	log.Println(string(data))
 
 	return nil
+}
+
+// New bootstraps badcapt configuration.
+func New(opts ...func(*Config) error) (*Config, error) {
+	conf := &Config{
+		client:    nil,
+		indexName: indexName,
+		docType:   docType,
+		checks:    defaultChecks,
+	}
+
+	for _, f := range opts {
+		err := f(conf)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	return conf, nil
 }
 
 // NewConfig bootstraps badcapt configuration

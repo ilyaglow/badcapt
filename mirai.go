@@ -6,10 +6,10 @@ import (
 	"github.com/google/gopacket"
 )
 
-// MiraiCheck adds mirai tag for a packet which
+// MiraiIdentifier adds mirai tag for a packet which
 // TCP sequence equals destination IP-address
 // in a decimal format
-func MiraiCheck(p gopacket.Packet) []string {
+func MiraiIdentifier(p gopacket.Packet) []string {
 	ip4 := unpackIPv4(p)
 	if ip4 == nil {
 		return nil
