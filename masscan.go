@@ -21,20 +21,22 @@ func MasscanIdentifier(p gopacket.Packet) []string {
 		return nil
 	}
 
-	dstport := make([]byte, 2)
-	binary.BigEndian.PutUint16(dstport, uint16(tcp.DstPort))
-
 	seq := make([]byte, 4)
 	binary.BigEndian.PutUint32(seq, tcp.Seq)
 
-	xored := make([]byte, 4)
-	fastxor.Bytes(xored, seq, ip4.DstIP)
-	fastxor.Bytes(xored, xored, dstport)
+	xoredIPSeq := make([]byte, 4)
+	fastxor.Bytes(xoredIPSeq, seq, ip4.DstIP)
+
+	dstport := make([]byte, 2)
+	binary.BigEndian.PutUint16(dstport, uint16(tcp.DstPort))
+
+	xored := make([]byte, 2)
+	fastxor.Bytes(xored, xoredIPSeq, dstport)
 
 	id := make([]byte, 2)
 	binary.BigEndian.PutUint16(id, ip4.Id)
 
-	if bytes.Equal(id, xored[:2]) {
+	if bytes.Equal(id, xored) {
 		return []string{"masscan"}
 	}
 
