@@ -6,7 +6,7 @@ import (
 	"github.com/google/gopacket"
 )
 
-// MasscanIdentifier adds zmap tag for a packet which
+// MasscanIdentifier adds masscan tag for a packet which
 // IP ID header = dstip ⊕ dstport ⊕ tcpseq.
 func MasscanIdentifier(p gopacket.Packet) []string {
 	ip4 := unpackIPv4(p)
