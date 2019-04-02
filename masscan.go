@@ -1,11 +1,9 @@
 package badcapt
 
 import (
-	"bytes"
 	"encoding/binary"
 
 	"github.com/google/gopacket"
-	"github.com/lukechampine/fastxor"
 )
 
 // MasscanIdentifier adds zmap tag for a packet which
@@ -21,22 +19,10 @@ func MasscanIdentifier(p gopacket.Packet) []string {
 		return nil
 	}
 
-	seq := make([]byte, 4)
-	binary.BigEndian.PutUint32(seq, tcp.Seq)
+	ipUint := binary.BigEndian.Uint32(ip4.DstIP)
+	want := ipUint ^ uint32(tcp.DstPort) ^ tcp.Seq
 
-	xoredIPSeq := make([]byte, 4)
-	fastxor.Bytes(xoredIPSeq, seq, ip4.DstIP)
-
-	dstport := make([]byte, 2)
-	binary.BigEndian.PutUint16(dstport, uint16(tcp.DstPort))
-
-	xored := make([]byte, 2)
-	fastxor.Bytes(xored, xoredIPSeq, dstport)
-
-	id := make([]byte, 2)
-	binary.BigEndian.PutUint16(id, ip4.Id)
-
-	if bytes.Equal(id, xored) {
+	if uint16(want) == ip4.Id {
 		return []string{"masscan"}
 	}
 
