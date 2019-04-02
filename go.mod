@@ -4,7 +4,6 @@ go 1.12
 
 require (
 	github.com/google/gopacket v1.1.16
-	github.com/lukechampine/fastxor v0.0.0-20181011214817-ab5bbcecc5ed
 	github.com/mdlayher/raw v0.0.0-20190315120451-8be9e99c38b6 // indirect
 	github.com/olivere/elastic v6.2.16+incompatible // indirect
 	golang.org/x/sys v0.0.0-20190329044733-9eb1bfa1ce65 // indirect
