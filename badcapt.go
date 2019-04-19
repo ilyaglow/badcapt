@@ -19,7 +19,10 @@ const (
 	docType   = "bcrecord"
 )
 
-var defaultChecks = []func(gopacket.Packet) []string{
+// Marker represents a routine that identifies the raw packet.
+type Marker func(gopacket.Packet) []string
+
+var defaultMarkers = []Marker{
 	MiraiIdentifier,
 	ZmapIdentifier,
 	MasscanIdentifier,
@@ -30,10 +33,10 @@ type Config struct {
 	client    *elastic.Client
 	indexName string
 	docType   string
-	checks    []func(gopacket.Packet) []string
+	markers   []Marker
 }
 
-// TaggedPacket represents a packet that went through checks
+// TaggedPacket represents a packet that went through markers.
 type TaggedPacket struct {
 	Packet gopacket.Packet
 	Tags   []string
@@ -159,7 +162,7 @@ func New(opts ...func(*Config) error) (*Config, error) {
 		client:    nil,
 		indexName: indexName,
 		docType:   docType,
-		checks:    defaultChecks,
+		markers:   defaultMarkers,
 	}
 
 	for _, f := range opts {
@@ -172,8 +175,40 @@ func New(opts ...func(*Config) error) (*Config, error) {
 	return conf, nil
 }
 
+// AddPacketMarker adds a packet marking routine.
+func AddPacketMarker(m Marker) func(*Config) error {
+	return func(c *Config) error {
+		c.markers = append(c.markers, m)
+		return nil
+	}
+}
+
+// SetElastic sets elasticsearch client to export events to.
+func SetElastic(client *elastic.Client) func(*Config) error {
+	return func(c *Config) error {
+		c.client = client
+		return nil
+	}
+}
+
+// SetElasticIndexName sets an index name where events are going to be written.
+func SetElasticIndexName(name string) func(*Config) error {
+	return func(c *Config) error {
+		c.indexName = name
+		return nil
+	}
+}
+
+// SetElasticDocType sets the events documents type.
+func SetElasticDocType(doc string) func(*Config) error {
+	return func(c *Config) error {
+		c.docType = doc
+		return nil
+	}
+}
+
 // NewConfig bootstraps badcapt configuration
-func NewConfig(elasticLoc string, checks ...func(gopacket.Packet) []string) (*Config, error) {
+func NewConfig(elasticLoc string, markers ...func(gopacket.Packet) []string) (*Config, error) {
 	client, err := elastic.NewClient(
 		elastic.SetURL(elasticLoc),
 		elastic.SetSniff(false),
@@ -200,8 +235,8 @@ func NewConfig(elasticLoc string, checks ...func(gopacket.Packet) []string) (*Co
 		}
 	}
 
-	if len(checks) == 0 {
-		conf.checks = defaultChecks
+	if len(markers) == 0 {
+		conf.markers = defaultMarkers
 	}
 
 	return conf, nil
@@ -220,7 +255,7 @@ func (c *Config) Listen(iface string) error {
 	for p := range packetSource.Packets() {
 		var tags []string
 
-		for _, fn := range c.checks {
+		for _, fn := range c.markers {
 			tags = append(tags, fn(p)...)
 		}
 
