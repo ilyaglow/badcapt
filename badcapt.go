@@ -11,7 +11,7 @@ import (
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
-	elastic "gopkg.ilya.app/olivere/elastic.v5"
+	"github.com/olivere/elastic"
 )
 
 const (
