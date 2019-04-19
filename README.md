@@ -1,3 +1,6 @@
+[![Build Status](https://travis-ci.org/ilyaglow/badcapt.svg?branch=master)](https://travis-ci.org/ilyaglow/badcapt)
+[![](https://godoc.org/github.com/ilyaglow/badcapt?status.svg)](http://godoc.org/github.com/ilyaglow/badcapt)
+
 About
 -----
 
