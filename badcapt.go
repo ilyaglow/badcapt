@@ -172,6 +172,22 @@ func New(opts ...func(*Badcapt) error) (*Badcapt, error) {
 		}
 	}
 
+	if conf.client == nil {
+		return conf, nil
+	}
+
+	exists, err := conf.client.IndexExists(indexName).Do(context.Background())
+	if err != nil {
+		return nil, err
+	}
+
+	if !exists {
+		_, err := conf.client.CreateIndex(indexName).Do(context.Background())
+		if err != nil {
+			return nil, err
+		}
+	}
+
 	return conf, nil
 }
 
@@ -207,8 +223,9 @@ func SetElasticDocType(doc string) func(*Badcapt) error {
 	}
 }
 
-// NewConfig bootstraps badcapt configuration
-func NewConfig(elasticLoc string, markers ...func(gopacket.Packet) []string) (*Badcapt, error) {
+// NewConfig bootstraps badcapt configuration.
+// Deprecated. Use New instead.
+func NewConfig(elasticLoc string, markers ...Marker) (*Badcapt, error) {
 	client, err := elastic.NewClient(
 		elastic.SetURL(elasticLoc),
 		elastic.SetSniff(false),

@@ -26,8 +26,6 @@ Usage of badcapt:
     	Elastic URL (default "http://localhost:9200")
   -i string
     	Interface name to listen
-  -d bool
-    	Turn on debug mode
 ```
 
 You can also [take a look at](https://github.com/ilyaglow/badcapt/tree/master/cmd/badsearch) `badsearch` - a simple daily records dumper script
