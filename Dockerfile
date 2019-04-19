@@ -22,4 +22,5 @@ RUN apk --update --no-cache add libpcap \
   && adduser -D badcapt
 
 USER badcapt
-ENTRYPOINT ["/badcapt", "-i", "eth0", "-d"]
+ENTRYPOINT ["/badcapt"]
+CMD ["-h"]
