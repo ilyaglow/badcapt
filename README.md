@@ -17,6 +17,15 @@ The app is built on top of `gopacket` package which provides C bindings for the
 go get github.com/ilyaglow/badcapt/cmd/badcapt
 ```
 
+Also you can use the docker image (see below on how to use it):
+```
+docker build -t badcapt https://github.com/ilyaglow/badcapt.git
+```
+or
+```
+docker pull ilyaglow/badcapt
+```
+
 Usage
 -----
 
@@ -32,6 +41,12 @@ Usage of badcapt:
 If no Elasticsearch URL provided, badcapt will simply output records to the
 screen.
 
-You can also take a look at
-[badsearch](https://github.com/ilyaglow/badcapt/tree/master/cmd/badsearch):
-it dumps all records in the database for the last 24 hours.
+To use the dockerized version you must run it with `--net=host` switch:
+```
+docker run -d ilyaglow/badcapt -i eth0
+```
+
+You can also take a look at the
+[badsearch](https://github.com/ilyaglow/badcapt/tree/master/cmd/badsearch)
+companion script for the Elasticsearch: it dumps all records in the database for
+the last 24 hours.
