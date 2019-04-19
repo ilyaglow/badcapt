@@ -43,7 +43,7 @@ screen.
 
 To use the dockerized version you must run it with `--net=host` switch:
 ```
-docker run -d ilyaglow/badcapt -i eth0
+docker run -d --net=host ilyaglow/badcapt -i eth0
 ```
 
 You can also take a look at the
