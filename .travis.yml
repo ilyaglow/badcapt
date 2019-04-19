@@ -4,9 +4,8 @@ go:
   - master
 
 env:
-  - GO111MODULE=on
-  - GOOS=linux
-  - GOARCH=amd64
+  global:
+    - GO111MODULE=on GOOS=linux GOARCH=amd64
 
 before_install:
   - sudo apt-get update
