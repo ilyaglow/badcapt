@@ -19,20 +19,20 @@ func main() {
 	}
 
 	var (
-		err  error
-		conf *badcapt.Config
+		err error
+		bc  *badcapt.Badcapt
 	)
 	if *debug {
-		conf, err = badcapt.New()
+		bc, err = badcapt.New()
 		if err != nil {
 			panic(err)
 		}
 	} else {
-		conf, err = badcapt.NewConfig(*elasticLoc)
+		bc, err = badcapt.NewConfig(*elasticLoc)
 		if err != nil {
 			panic(err)
 		}
 	}
 
-	log.Fatal(conf.Listen(*listenIface))
+	log.Fatal(bc.Listen(*listenIface))
 }

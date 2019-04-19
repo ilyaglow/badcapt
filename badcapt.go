@@ -28,8 +28,8 @@ var defaultMarkers = []Marker{
 	MasscanIdentifier,
 }
 
-// Config defines badcapt configuration
-type Config struct {
+// Badcapt defines badcapt configuration
+type Badcapt struct {
 	client    *elastic.Client
 	indexName string
 	docType   string
@@ -123,30 +123,30 @@ func NewRecord(tp *TaggedPacket) (*Record, error) {
 	}, nil
 }
 
-func (c *Config) export(ctx context.Context, tp *TaggedPacket) error {
+func (b *Badcapt) export(ctx context.Context, tp *TaggedPacket) error {
 	record, err := NewRecord(tp)
 	if err != nil {
 		return err
 	}
 
-	if c.client == nil {
-		return c.exportScreen(record)
+	if b.client == nil {
+		return exportScreen(record)
 	}
 
-	return c.exportElastic(ctx, record)
+	return b.exportElastic(ctx, record)
 }
 
-func (c *Config) exportElastic(ctx context.Context, record *Record) error {
-	_, err := c.client.Index().
-		Index(c.indexName).
-		Type(c.docType).
+func (b *Badcapt) exportElastic(ctx context.Context, record *Record) error {
+	_, err := b.client.Index().
+		Index(b.indexName).
+		Type(b.docType).
 		BodyJson(record).
 		Do(ctx)
 
 	return err
 }
 
-func (c *Config) exportScreen(record *Record) error {
+func exportScreen(record *Record) error {
 	data, err := json.Marshal(record)
 	if err != nil {
 		return err
@@ -157,8 +157,8 @@ func (c *Config) exportScreen(record *Record) error {
 }
 
 // New bootstraps badcapt configuration.
-func New(opts ...func(*Config) error) (*Config, error) {
-	conf := &Config{
+func New(opts ...func(*Badcapt) error) (*Badcapt, error) {
+	conf := &Badcapt{
 		client:    nil,
 		indexName: indexName,
 		docType:   docType,
@@ -176,39 +176,39 @@ func New(opts ...func(*Config) error) (*Config, error) {
 }
 
 // AddPacketMarker adds a packet marking routine.
-func AddPacketMarker(m Marker) func(*Config) error {
-	return func(c *Config) error {
-		c.markers = append(c.markers, m)
+func AddPacketMarker(m Marker) func(*Badcapt) error {
+	return func(b *Badcapt) error {
+		b.markers = append(b.markers, m)
 		return nil
 	}
 }
 
 // SetElastic sets elasticsearch client to export events to.
-func SetElastic(client *elastic.Client) func(*Config) error {
-	return func(c *Config) error {
-		c.client = client
+func SetElastic(client *elastic.Client) func(*Badcapt) error {
+	return func(b *Badcapt) error {
+		b.client = client
 		return nil
 	}
 }
 
 // SetElasticIndexName sets an index name where events are going to be written.
-func SetElasticIndexName(name string) func(*Config) error {
-	return func(c *Config) error {
-		c.indexName = name
+func SetElasticIndexName(name string) func(*Badcapt) error {
+	return func(b *Badcapt) error {
+		b.indexName = name
 		return nil
 	}
 }
 
 // SetElasticDocType sets the events documents type.
-func SetElasticDocType(doc string) func(*Config) error {
-	return func(c *Config) error {
-		c.docType = doc
+func SetElasticDocType(doc string) func(*Badcapt) error {
+	return func(b *Badcapt) error {
+		b.docType = doc
 		return nil
 	}
 }
 
 // NewConfig bootstraps badcapt configuration
-func NewConfig(elasticLoc string, markers ...func(gopacket.Packet) []string) (*Config, error) {
+func NewConfig(elasticLoc string, markers ...func(gopacket.Packet) []string) (*Badcapt, error) {
 	client, err := elastic.NewClient(
 		elastic.SetURL(elasticLoc),
 		elastic.SetSniff(false),
@@ -217,7 +217,7 @@ func NewConfig(elasticLoc string, markers ...func(gopacket.Packet) []string) (*C
 		return nil, err
 	}
 
-	conf := &Config{
+	conf := &Badcapt{
 		client:    client,
 		indexName: indexName,
 		docType:   docType,
@@ -243,7 +243,7 @@ func NewConfig(elasticLoc string, markers ...func(gopacket.Packet) []string) (*C
 }
 
 // Listen starts packet sniffing and processing
-func (c *Config) Listen(iface string) error {
+func (b *Badcapt) Listen(iface string) error {
 	handle, err := pcap.OpenLive(iface, 1600, true, pcap.BlockForever)
 	if err != nil {
 		return err
@@ -255,7 +255,7 @@ func (c *Config) Listen(iface string) error {
 	for p := range packetSource.Packets() {
 		var tags []string
 
-		for _, fn := range c.markers {
+		for _, fn := range b.markers {
 			tags = append(tags, fn(p)...)
 		}
 
@@ -263,7 +263,7 @@ func (c *Config) Listen(iface string) error {
 			continue
 		}
 
-		if err := c.export(context.Background(), &TaggedPacket{p, tags}); err != nil {
+		if err := b.export(context.Background(), &TaggedPacket{p, tags}); err != nil {
 			log.Println(err)
 		}
 	}
