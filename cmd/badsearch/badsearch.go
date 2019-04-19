@@ -5,7 +5,7 @@ import (
 	"flag"
 	"fmt"
 
-	elastic "gopkg.in/olivere/elastic.v5"
+	"github.com/olivere/elastic"
 )
 
 const (
