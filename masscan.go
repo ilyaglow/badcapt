@@ -19,6 +19,10 @@ func MasscanIdentifier(p gopacket.Packet) []string {
 		return nil
 	}
 
+	if tcp.SYN == false {
+		return nil
+	}
+
 	ipUint := binary.BigEndian.Uint32(ip4.DstIP)
 	want := ipUint ^ uint32(tcp.DstPort) ^ tcp.Seq
 

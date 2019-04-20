@@ -20,6 +20,10 @@ func MiraiIdentifier(p gopacket.Packet) []string {
 		return nil
 	}
 
+	if tcp.SYN == false {
+		return nil
+	}
+
 	if binary.BigEndian.Uint32(ip4.DstIP) != tcp.Seq {
 		return nil
 	}
