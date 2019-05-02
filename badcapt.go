@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"fmt"
 	"log"
 	"net"
 	"time"
@@ -151,7 +152,7 @@ func exportScreen(record *Record) error {
 	if err != nil {
 		return err
 	}
-	log.Println(string(data))
+	fmt.Println(string(data))
 
 	return nil
 }
