@@ -5,11 +5,11 @@ About
 -----
 
 Badcapt is a project inspired by
-[@Bad_Packets](https://twitter.com/bad_packets) work and the
+[Bad Packets'](https://badpackets.net) work and the
 [Remote Identification of Port Scan Toolchains](http://pure.tudelft.nl/ws/files/10611227/10611102.pdf)
 paper by Vincent Ghiette, Norbert Blenn, Christian Doerr.
 
-It will try to detect *bad* packets and export them to the Elastic storage or
+It will try to detect malicious packets and export them to the Elastic storage or
 output to the stdout for your further processing.
 
 Install
