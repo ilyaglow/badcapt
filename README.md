@@ -38,7 +38,7 @@ Usage
 ./badcapt -h
 Usage of badcapt:
   -e string
-    	Elasticsearch URL
+    	Elasticsearch URL (optional)
   -i string
     	Interface name to listen
 ```
