@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"io"
 	"log"
 	"net"
 	"time"
@@ -270,7 +271,15 @@ func (b *Badcapt) Listen(iface string) error {
 	log.Printf("Started capturing on iface %s", iface)
 
 	packetSource := gopacket.NewPacketSource(handle, handle.LinkType())
-	for p := range packetSource.Packets() {
+	for {
+		p, err := packetSource.NextPacket()
+		if err == io.EOF {
+			break
+		} else if err != nil {
+			log.Println(err)
+			continue
+		}
+
 		var tags []string
 
 		for _, fn := range b.markers {
