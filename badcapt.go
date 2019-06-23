@@ -28,6 +28,7 @@ var defaultMarkers = []Marker{
 	MiraiIdentifier,
 	ZmapIdentifier,
 	MasscanIdentifier,
+	LowMSSIdentifier,
 }
 
 // Badcapt defines badcapt configuration
