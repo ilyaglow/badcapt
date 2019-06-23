@@ -104,7 +104,7 @@ func NewRecord(tp *TaggedPacket) (*Record, error) {
 		dstPort = uint16(udp.DstPort)
 		transport = "udp"
 	} else {
-		return nil, errors.New("nor tcp nor udp type packet")
+		return nil, fmt.Errorf("nor tcp nor udp type packet, tags: %v", tp.Tags)
 	}
 
 	var payload []byte
@@ -268,6 +268,11 @@ func (b *Badcapt) Listen(iface string) error {
 	if err != nil {
 		return err
 	}
+	err = handle.SetDirection(pcap.DirectionIn)
+	if err != nil {
+		return nil
+	}
+
 	defer handle.Close()
 	log.Printf("Started capturing on iface %s", iface)
 
