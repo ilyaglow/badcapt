@@ -10,6 +10,7 @@ import (
 	"net"
 	"time"
 
+	"github.com/VictoriaMetrics/fastcache"
 	"github.com/google/gopacket"
 	"github.com/google/gopacket/layers"
 	"github.com/google/gopacket/pcap"
@@ -24,18 +25,26 @@ const (
 // Marker represents a routine that identifies the raw packet.
 type Marker func(gopacket.Packet) []string
 
+// SeriesMarker represents a routine that identifies a series of packets.
+type SeriesMarker func(...gopacket.Packet) []string
+
 var defaultMarkers = []Marker{
 	MiraiIdentifier,
 	ZmapIdentifier,
 	MasscanIdentifier,
 }
 
+var defaultSeriesMarkers = []SeriesMarker{}
+
 // Badcapt defines badcapt configuration
 type Badcapt struct {
-	client    *elastic.Client
-	indexName string
-	docType   string
-	markers   []Marker
+	client        *elastic.Client
+	indexName     string
+	docType       string
+	markers       []Marker
+	seriesMarkers []SeriesMarker
+	cache         *fastcache.Cache
+	cacheSize     int
 }
 
 // TaggedPacket represents a packet that went through markers.
@@ -225,6 +234,14 @@ func SetElasticDocType(doc string) func(*Badcapt) error {
 	}
 }
 
+// SetCacheSize to limit it's max size.
+func SetCacheSize(size int) func(*Badcapt) error {
+	return func(b *Badcapt) error {
+		b.cacheSize = size
+		return nil
+	}
+}
+
 // NewConfig bootstraps badcapt configuration.
 // Deprecated. Use New instead.
 func NewConfig(elasticLoc string, markers ...Marker) (*Badcapt, error) {
@@ -280,19 +297,34 @@ func (b *Badcapt) Listen(iface string) error {
 			continue
 		}
 
-		var tags []string
+		go func() {
+			hErr := b.handle(p)
+			if hErr != nil {
+				log.Println(hErr)
+			}
+		}()
+	}
 
-		for _, fn := range b.markers {
-			tags = append(tags, fn(p)...)
-		}
+	return nil
+}
 
-		if len(tags) == 0 {
-			continue
-		}
+func (b *Badcapt) handle(p gopacket.Packet) error {
+	var tags []string
 
-		if err := b.export(context.Background(), &TaggedPacket{p, tags}); err != nil {
-			log.Println(err)
-		}
+	for _, fn := range b.markers {
+		tags = append(tags, fn(p)...)
+	}
+
+	for _, sfn := range b.seriesMarkers {
+		tags = append(tags, sfn(p)...)
+	}
+
+	if len(tags) == 0 {
+		return nil
+	}
+
+	if err := b.export(context.Background(), &TaggedPacket{p, tags}); err != nil {
+		return err
 	}
 
 	return nil

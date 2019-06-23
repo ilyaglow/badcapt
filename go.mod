@@ -3,6 +3,7 @@ module github.com/ilyaglow/badcapt
 go 1.12
 
 require (
+	github.com/VictoriaMetrics/fastcache v1.5.1
 	github.com/fortytw2/leaktest v1.2.0 // indirect
 	github.com/google/gopacket v1.1.16
 	github.com/mailru/easyjson v0.0.0-20180730094502-03f2033d19d5 // indirect
