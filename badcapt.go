@@ -3,7 +3,6 @@ package badcapt
 import (
 	"context"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io"
 	"log"
@@ -82,7 +81,7 @@ func unpackTCP(p gopacket.Packet) *layers.TCP {
 func NewRecord(tp *TaggedPacket) (*Record, error) {
 	ip4 := unpackIPv4(tp.Packet)
 	if ip4 == nil {
-		return nil, errors.New("not ip4 type packet")
+		return nil, fmt.Errorf("not ip4 type packet, tags: %v", tp.Tags)
 	}
 
 	udpLayer := tp.Packet.Layer(layers.LayerTypeUDP)
