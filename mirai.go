@@ -15,6 +15,10 @@ func MiraiIdentifier(p gopacket.Packet) []string {
 		return nil
 	}
 
+	if ip4.TTL != 64 {
+		return nil
+	}
+
 	tcp := unpackTCP(p)
 	if tcp == nil {
 		return nil
