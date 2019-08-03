@@ -2,6 +2,7 @@ package badcapt
 
 import (
 	"context"
+	"encoding/binary"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -46,15 +47,15 @@ type TaggedPacket struct {
 
 // Record contains packet data, that is ready to be exported
 type Record struct {
-	SrcIP          net.IP    `json:"src_ip,omitempty"`
-	TransportProto string    `json:"transport"`
-	SrcPort        uint16    `json:"src_port"`
-	DstIP          net.IP    `json:"dst_ip,omitempty"`
-	DstPort        uint16    `json:"dst_port"`
-	Timestamp      time.Time `json:"date"`
-	Tags           []string  `json:"tags"`
-	Payload        []byte    `json:"payload,omitempty"`
-	PayloadString  string    `json:"payload_str,omitempty"`
+	SrcIP         net.IP    `json:"src_ip,omitempty"`
+	Protocols     []string  `json:"protocols,omitempty"`
+	SrcPort       uint16    `json:"src_port,omitempty"`
+	DstIP         net.IP    `json:"dst_ip,omitempty"`
+	DstPort       uint16    `json:"dst_port,omitempty"`
+	Timestamp     time.Time `json:"date"`
+	Tags          []string  `json:"tags"`
+	Payload       []byte    `json:"payload,omitempty"`
+	PayloadString string    `json:"payload_str,omitempty"`
 }
 
 func unpackIPv4(p gopacket.Packet) *layers.IPv4 {
@@ -79,49 +80,38 @@ func unpackTCP(p gopacket.Packet) *layers.TCP {
 
 // NewRecord constructs a record to write to the database
 func NewRecord(tp *TaggedPacket) (*Record, error) {
-	ip4 := unpackIPv4(tp.Packet)
-	if ip4 == nil {
-		return nil, fmt.Errorf("not ip4 type packet, tags: %v", tp.Tags)
+	var protos []string
+	for _, l := range tp.Packet.Layers() {
+		protos = append(protos, l.LayerType().String())
 	}
 
-	udpLayer := tp.Packet.Layer(layers.LayerTypeUDP)
-	tcpLayer := tp.Packet.Layer(layers.LayerTypeTCP)
-	var (
-		srcPort   uint16
-		dstPort   uint16
-		transport string
-	)
+	var srcIP, dstIP net.IP
+	if netLayer := tp.Packet.NetworkLayer(); netLayer != nil {
+		srcIP = net.IP(netLayer.NetworkFlow().Src().Raw())
+		dstIP = net.IP(netLayer.NetworkFlow().Dst().Raw())
+	}
 
-	if tcpLayer != nil {
-		tcp := tcpLayer.(*layers.TCP)
-		srcPort = uint16(tcp.SrcPort)
-		dstPort = uint16(tcp.DstPort)
-		transport = "tcp"
-	} else if udpLayer != nil {
-		udp := udpLayer.(*layers.UDP)
-		srcPort = uint16(udp.SrcPort)
-		dstPort = uint16(udp.DstPort)
-		transport = "udp"
-	} else {
-		return nil, fmt.Errorf("nor tcp nor udp type packet, tags: %v", tp.Tags)
+	var srcPort, dstPort uint16
+	if trLayer := tp.Packet.TransportLayer(); trLayer != nil {
+		srcPort = binary.BigEndian.Uint16(trLayer.TransportFlow().Src().Raw())
+		dstPort = binary.BigEndian.Uint16(trLayer.TransportFlow().Dst().Raw())
 	}
 
 	var payload []byte
-	appLayer := tp.Packet.ApplicationLayer()
-	if appLayer != nil {
+	if appLayer := tp.Packet.ApplicationLayer(); appLayer != nil {
 		payload = appLayer.Payload()
 	}
 
 	return &Record{
-		SrcIP:          ip4.SrcIP,
-		DstIP:          ip4.DstIP,
-		SrcPort:        srcPort,
-		DstPort:        dstPort,
-		Timestamp:      tp.Packet.Metadata().CaptureInfo.Timestamp,
-		Payload:        payload,
-		PayloadString:  string(payload),
-		Tags:           tp.Tags,
-		TransportProto: transport,
+		SrcIP:         srcIP,
+		DstIP:         dstIP,
+		SrcPort:       srcPort,
+		DstPort:       dstPort,
+		Timestamp:     tp.Packet.Metadata().CaptureInfo.Timestamp,
+		Payload:       payload,
+		PayloadString: string(payload),
+		Tags:          tp.Tags,
+		Protocols:     protos,
 	}, nil
 }
 
