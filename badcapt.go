@@ -48,7 +48,7 @@ type TaggedPacket struct {
 // Record contains packet data, that is ready to be exported
 type Record struct {
 	SrcIP         net.IP    `json:"src_ip,omitempty"`
-	Protocols     []string  `json:"protocols,omitempty"`
+	Layers        []string  `json:"layers,omitempty"`
 	SrcPort       uint16    `json:"src_port,omitempty"`
 	DstIP         net.IP    `json:"dst_ip,omitempty"`
 	DstPort       uint16    `json:"dst_port,omitempty"`
@@ -80,9 +80,9 @@ func unpackTCP(p gopacket.Packet) *layers.TCP {
 
 // NewRecord constructs a record to write to the database
 func NewRecord(tp *TaggedPacket) (*Record, error) {
-	var protos []string
+	var layers []string
 	for _, l := range tp.Packet.Layers() {
-		protos = append(protos, l.LayerType().String())
+		layers = append(layers, l.LayerType().String())
 	}
 
 	var srcIP, dstIP net.IP
@@ -111,7 +111,7 @@ func NewRecord(tp *TaggedPacket) (*Record, error) {
 		Payload:       payload,
 		PayloadString: string(payload),
 		Tags:          tp.Tags,
-		Protocols:     protos,
+		Layers:        layers,
 	}, nil
 }
 
