@@ -3,7 +3,7 @@ stages:
   - deploy
 
 build:
-  stage: test
+  stage: build
   script:
     - docker build -t badcapt -f badcapt-tg.Dockerfile .
 
