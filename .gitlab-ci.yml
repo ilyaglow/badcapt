@@ -1,0 +1,14 @@
+stages:
+  - build
+  - deploy
+
+build:
+  stage: test
+  script:
+    - docker build -t badcapt -f badcapt-tg.Dockerfile .
+
+deploy:
+  stage: deploy
+  script:
+    - docker run -it --rm --net=host --restart=always -e API_KEY=${API_KEY} badcapt -i eth0 -chat
+
