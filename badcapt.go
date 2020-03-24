@@ -33,10 +33,11 @@ var defaultMarkers = []Marker{
 
 // Badcapt defines badcapt configuration
 type Badcapt struct {
-	client    *elastic.Client
-	indexName string
-	docType   string
-	markers   []Marker
+	elasticClient *elastic.Client
+	indexName     string
+	docType       string
+	markers       []Marker
+	exportFunc    func(context.Context, *Record) error
 }
 
 // TaggedPacket represents a packet that went through markers.
@@ -121,15 +122,11 @@ func (b *Badcapt) export(ctx context.Context, tp *TaggedPacket) error {
 		return err
 	}
 
-	if b.client == nil {
-		return exportScreen(record)
-	}
-
-	return b.exportElastic(ctx, record)
+	return b.exportFunc(ctx, record)
 }
 
 func (b *Badcapt) exportElastic(ctx context.Context, record *Record) error {
-	_, err := b.client.Index().
+	_, err := b.elasticClient.Index().
 		Index(b.indexName).
 		Type(b.docType).
 		BodyJson(record).
@@ -138,7 +135,7 @@ func (b *Badcapt) exportElastic(ctx context.Context, record *Record) error {
 	return err
 }
 
-func exportScreen(record *Record) error {
+func (b *Badcapt) exportScreen(_ context.Context, record *Record) error {
 	data, err := json.Marshal(record)
 	if err != nil {
 		return err
@@ -151,11 +148,12 @@ func exportScreen(record *Record) error {
 // New bootstraps badcapt configuration.
 func New(opts ...func(*Badcapt) error) (*Badcapt, error) {
 	conf := &Badcapt{
-		client:    nil,
-		indexName: indexName,
-		docType:   docType,
-		markers:   defaultMarkers,
+		elasticClient: nil,
+		indexName:     indexName,
+		docType:       docType,
+		markers:       defaultMarkers,
 	}
+	conf.exportFunc = conf.exportScreen
 
 	for _, f := range opts {
 		err := f(conf)
@@ -164,17 +162,17 @@ func New(opts ...func(*Badcapt) error) (*Badcapt, error) {
 		}
 	}
 
-	if conf.client == nil {
+	if conf.elasticClient == nil {
 		return conf, nil
 	}
 
-	exists, err := conf.client.IndexExists(indexName).Do(context.Background())
+	exists, err := conf.elasticClient.IndexExists(indexName).Do(context.Background())
 	if err != nil {
 		return nil, err
 	}
 
 	if !exists {
-		_, err := conf.client.CreateIndex(indexName).Do(context.Background())
+		_, err := conf.elasticClient.CreateIndex(indexName).Do(context.Background())
 		if err != nil {
 			return nil, err
 		}
@@ -194,7 +192,8 @@ func AddPacketMarker(m Marker) func(*Badcapt) error {
 // SetElastic sets elasticsearch client to export events to.
 func SetElastic(client *elastic.Client) func(*Badcapt) error {
 	return func(b *Badcapt) error {
-		b.client = client
+		b.elasticClient = client
+		b.exportFunc = b.exportElastic
 		return nil
 	}
 }
@@ -215,6 +214,14 @@ func SetElasticDocType(doc string) func(*Badcapt) error {
 	}
 }
 
+// SetExportFunc to export events the way user want.
+func SetExportFunc(fn func(ctx context.Context, rec *Record) error) func(*Badcapt) error {
+	return func(b *Badcapt) error {
+		b.exportFunc = fn
+		return nil
+	}
+}
+
 // NewConfig bootstraps badcapt configuration.
 // Deprecated. Use New instead.
 func NewConfig(elasticLoc string, markers ...Marker) (*Badcapt, error) {
@@ -227,9 +234,9 @@ func NewConfig(elasticLoc string, markers ...Marker) (*Badcapt, error) {
 	}
 
 	conf := &Badcapt{
-		client:    client,
-		indexName: indexName,
-		docType:   docType,
+		elasticClient: client,
+		indexName:     indexName,
+		docType:       docType,
 	}
 
 	exists, err := client.IndexExists(indexName).Do(context.Background())
