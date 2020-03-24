@@ -10,4 +10,6 @@ build:
 deploy:
   stage: deploy
   script:
+    - docker stop badcapt
+    - docker rm badcapt
     - docker run -d --net=host --name=badcapt --restart=always -e API_KEY=${API_KEY} badcapt -i eth0 -chat=${CHAT_ID}
