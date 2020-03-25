@@ -33,7 +33,9 @@ func main() {
 			return fmt.Errorf("json.Marshal: %w", err)
 		}
 
-		_, err = bot.Send(tgbotapi.NewMessage(int64(*chatID), string(j)))
+		msg := tgbotapi.NewMessage(int64(*chatID), string(j))
+		msg.DisableWebPagePreview = true
+		_, err = bot.Send(msg)
 		if err != nil {
 			return fmt.Errorf("telegram send: %w", err)
 		}
