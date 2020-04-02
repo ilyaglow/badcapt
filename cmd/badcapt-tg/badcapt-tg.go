@@ -2,12 +2,12 @@ package main
 
 import (
 	"context"
-	"encoding/json"
 	"errors"
 	"flag"
 	"fmt"
 	"log"
 	"os"
+	"strings"
 
 	"github.com/go-telegram-bot-api/telegram-bot-api"
 	"github.com/ilyaglow/badcapt"
@@ -28,12 +28,15 @@ func main() {
 	}
 
 	fn := func(ctx context.Context, rec *badcapt.Record) error {
-		j, err := json.Marshal(rec)
-		if err != nil {
-			return fmt.Errorf("json.Marshal: %w", err)
-		}
-
-		msg := tgbotapi.NewMessage(int64(*chatID), string(j))
+		text := fmt.Sprintf(`srcip: %s
+srcport: %d
+dstip: %s
+dstport: %d
+layers: %s
+timestamp: %s
+tags: %s
+payload: %s`, rec.SrcIP, rec.SrcPort, rec.DstIP, rec.DstPort, strings.Join(rec.Layers, ","), rec.Timestamp, strings.Join(rec.Tags, ","), rec.PayloadString)
+		msg := tgbotapi.NewMessage(int64(*chatID), text)
 		msg.DisableWebPagePreview = true
 		_, err = bot.Send(msg)
 		if err != nil {
