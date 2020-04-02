@@ -23,7 +23,13 @@ func main() {
 		panic(errors.New("no iface provided"))
 	}
 
-	sc, err := stan.Connect("test-cluster", *clientID, stan.NatsURL(*natsURL))
+	sc, err := stan.Connect(
+		"test-cluster",
+		*clientID,
+		stan.NatsURL(*natsURL),
+		stan.SetConnectionLostHandler(func(_ stan.Conn, reason error) {
+			log.Fatalf("connection lost, reason: %v", reason)
+		}))
 	if err != nil {
 		log.Fatal(err)
 	}
