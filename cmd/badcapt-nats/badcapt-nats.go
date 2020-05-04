@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log"
 	"os"
+	"time"
 
 	"github.com/ilyaglow/badcapt"
 	stan "github.com/nats-io/stan.go"
@@ -17,6 +18,7 @@ func main() {
 	listenIface := flag.String("i", "", "Interface name to listen")
 	natsURL := flag.String("nats", os.Getenv("NATS_URL"), "NATS URL")
 	clientID := flag.String("id", os.Getenv("CLIENT_ID"), "NATS client id")
+	timeout := flag.Duration("t", 2*time.Second, "Publish to NATS timeout")
 	flag.Parse()
 
 	if *listenIface == "" {
@@ -27,6 +29,7 @@ func main() {
 		"test-cluster",
 		*clientID,
 		stan.NatsURL(*natsURL),
+		stan.PubAckWait(*timeout),
 		stan.SetConnectionLostHandler(func(_ stan.Conn, reason error) {
 			log.Fatalf("connection lost, reason: %v", reason)
 		}))
