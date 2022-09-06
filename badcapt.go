@@ -8,6 +8,7 @@ import (
 	"io"
 	"log"
 	"net"
+	"strings"
 	"time"
 
 	"github.com/google/gopacket"
@@ -33,11 +34,12 @@ var defaultMarkers = []Marker{
 
 // Badcapt defines badcapt configuration
 type Badcapt struct {
-	elasticClient *elastic.Client
-	indexName     string
-	docType       string
-	markers       []Marker
-	exportFunc    func(context.Context, *Record) error
+	elasticClient    *elastic.Client
+	indexName        string
+	docType          string
+	markers          []Marker
+	exportFunc       func(context.Context, *Record) error
+	portsDescription NmapServices
 }
 
 // TaggedPacket represents a packet that went through markers.
@@ -53,6 +55,7 @@ type Record struct {
 	SrcPort       uint16    `json:"src_port,omitempty"`
 	DstIP         net.IP    `json:"dst_ip,omitempty"`
 	DstPort       uint16    `json:"dst_port,omitempty"`
+	DstService    string    `json:"dst_service,omitempty"`
 	Timestamp     time.Time `json:"date"`
 	Tags          []string  `json:"tags"`
 	Payload       []byte    `json:"payload,omitempty"`
@@ -79,7 +82,7 @@ func unpackTCP(p gopacket.Packet) *layers.TCP {
 	return tcp
 }
 
-// NewRecord constructs a record to write to the database
+// NewRecord constructs a record for export.
 func NewRecord(tp *TaggedPacket) (*Record, error) {
 	var layers []string
 	for _, l := range tp.Packet.Layers() {
@@ -120,6 +123,19 @@ func (b *Badcapt) export(ctx context.Context, tp *TaggedPacket) error {
 	record, err := NewRecord(tp)
 	if err != nil {
 		return err
+	}
+
+	if b.portsDescription != nil {
+		var proto string
+		for _, p := range record.Layers {
+			if p == "TCP" || p == "UDP" || p == "SCTP" {
+				proto = strings.ToLower(p)
+				break
+			}
+		}
+		if proto != "" {
+			record.DstService = b.portsDescription[fmt.Sprintf("%d/%s", record.DstPort, proto)]
+		}
 	}
 
 	return b.exportFunc(ctx, record)
@@ -218,6 +234,19 @@ func SetElasticDocType(doc string) func(*Badcapt) error {
 func SetExportFunc(fn func(ctx context.Context, rec *Record) error) func(*Badcapt) error {
 	return func(b *Badcapt) error {
 		b.exportFunc = fn
+		return nil
+	}
+}
+
+// SetNmapServicesPath to translate port number to a service name.
+func SetNmapServicesPath(path string) func(*Badcapt) error {
+	var err error
+	return func(b *Badcapt) error {
+		b.portsDescription, err = ParseNmapServices(path)
+		if err != nil {
+			return fmt.Errorf("parsing nmap-services file: %w", err)
+		}
+		log.Printf("parsed descriptions for %d ports", len(b.portsDescription))
 		return nil
 	}
 }

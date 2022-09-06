@@ -12,6 +12,7 @@ import (
 func main() {
 	listenIface := flag.String("i", "", "Interface name to listen")
 	elasticLoc := flag.String("e", "", "Elastic URL")
+	nmapServicesPath := flag.String("ns", "", "Path to nmap-services file, by default on linux it's /usr/share/nmap/nmap-services")
 	flag.Parse()
 
 	if *listenIface == "" {
@@ -29,6 +30,11 @@ func main() {
 		}
 		funcs = append(funcs, badcapt.SetElastic(client))
 	}
+
+	if *nmapServicesPath != "" {
+		funcs = append(funcs, badcapt.SetNmapServicesPath(*nmapServicesPath))
+	}
+
 	bc, err := badcapt.New(funcs...)
 	if err != nil {
 		panic(err)
