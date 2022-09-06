@@ -1,6 +1,6 @@
 FROM golang:alpine
 
-LABEL maintainer "Ilya Milov <contact@ilya.app>"
+LABEL maintainer "Ilya Milov <contact+badcapt@ilya.app>"
 
 ENV GO111MODULE=on
 
