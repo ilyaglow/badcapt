@@ -41,10 +41,11 @@ Usage of badcapt:
     	Elasticsearch URL (optional)
   -i string
     	Interface name to listen
+  -ns string
+    	Path to nmap-services file, by default on linux it's /usr/share/nmap/nmap-services
 ```
 
-If no Elasticsearch URL provided, badcapt will simply output records to the
-screen.
+If no Elasticsearch URL provided, badcapt will simply output records to stdout.
 
 To use the dockerized version you must run it with `--net=host` switch:
 ```
