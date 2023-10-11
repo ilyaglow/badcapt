@@ -11,5 +11,5 @@ require (
 	github.com/olivere/elastic v6.2.26+incompatible
 	github.com/pkg/errors v0.8.1 // indirect
 	github.com/technoweenie/multipartstreamer v1.0.1 // indirect
-	golang.org/x/net v0.7.0 // indirect
+	golang.org/x/net v0.17.0 // indirect
 )
